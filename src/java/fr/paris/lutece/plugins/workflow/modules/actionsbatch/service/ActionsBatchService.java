@@ -39,6 +39,7 @@ import java.util.Locale;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import fr.paris.lutece.api.user.User;
+import fr.paris.lutece.plugins.workflowcore.exception.ResourceWorkflowLockedException;
 import fr.paris.lutece.portal.service.util.AppException;
 import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.workflow.WorkflowService;
@@ -101,7 +102,15 @@ public class ActionsBatchService
                 }
                 catch( AppException e )
                 {
-                    AppLogService.error( "An error occured when processing action {} on resource Id : {}", nIdAction, nIdResource );
+                    if ( e.getCause( ) instanceof ResourceWorkflowLockedException )
+                    {
+                        // Another action is in progress on this resource (user or other instance) or its state has changed
+                        AppLogService.info( "Action {} skipped on resource Id : {} - {}", nIdAction, nIdResource, e.getCause( ).getMessage( ) );
+                    }
+                    else
+                    {
+                        AppLogService.error( "An error occured when processing action {} on resource Id : {}", nIdAction, nIdResource );
+                    }
                 }
             }
         };
